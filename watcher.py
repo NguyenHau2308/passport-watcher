@@ -13,21 +13,35 @@ def check_full_passport_files(folder):
     found = set([f.name for f in files])
     return required.issubset(found)
 
+def parse_txt_to_dict(txt):
+    data = {}
+    for line in txt.splitlines():
+        if ":" in line:
+            key, value = line.split(":", 1)
+            data[key.strip()] = value.strip()
+    return data
+
 class ScanHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         if event.is_directory:
             return
-        # Kiểm tra đủ bộ 3 file chưa
         if check_full_passport_files(SCAN_DIR):
             print("ĐÃ ĐỦ FILE PASSPORT, CHUẨN BỊ XỬ LÝ.")
-            # Move files sang processed để tránh xử lý lặp
+            info_path = pathlib.Path(SCAN_DIR) / "001-INFO.txt"
+            if info_path.exists():
+                with open(info_path, "r", encoding="utf-8") as f:
+                    txt = f.read()
+                print("----- Passport Info TXT -----")
+                print(txt)
+                print("-----------------------------")
+                parsed = parse_txt_to_dict(txt)
+                print("Parsed data:", parsed)
+            # Move files sang processed
             for f in ["001-IMAGEPHOTO.jpg", "001-IMAGEVIS.jpg", "001-INFO.txt"]:
                 src = pathlib.Path(SCAN_DIR) / f
                 dst = pathlib.Path(PROCESSED_DIR) / f
                 shutil.move(str(src), str(dst))
             print("ĐÃ MOVE FILE SANG FOLDER processed/")
-        else:
-            print("Chưa đủ file, đợi tiếp...")
 
 if __name__ == "__main__":
     pathlib.Path(SCAN_DIR).mkdir(exist_ok=True)
