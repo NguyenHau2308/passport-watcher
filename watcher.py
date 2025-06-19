@@ -1,11 +1,13 @@
 import time
 import pathlib
 import shutil
+import requests
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 SCAN_DIR = "scan_out"
 PROCESSED_DIR = "processed"
+API_CHECK = "http://localhost:4000/check-passport"
 
 def check_full_passport_files(folder):
     files = list(pathlib.Path(folder).glob("001-*"))
@@ -36,6 +38,11 @@ class ScanHandler(FileSystemEventHandler):
                 print("-----------------------------")
                 parsed = parse_txt_to_dict(txt)
                 print("Parsed data:", parsed)
+                try:
+                    res = requests.post(API_CHECK, json=parsed, timeout=10)
+                    print("Kết quả từ server:", res.text)
+                except Exception as e:
+                    print("Lỗi gửi API:", e)
             # Move files sang processed
             for f in ["001-IMAGEPHOTO.jpg", "001-IMAGEVIS.jpg", "001-INFO.txt"]:
                 src = pathlib.Path(SCAN_DIR) / f
