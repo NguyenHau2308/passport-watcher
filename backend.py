@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pathlib
 import datetime
-import base64
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -115,23 +114,12 @@ async def check_passport(data: dict):
         await session.commit()
         return {"result": "new customer created", "customer_code": code}
 
-@app.get("/api/passport-img-base64/{img_name}")
-def get_passport_img_base64(img_name: str):
-    path = pathlib.Path(SCAN_DIR) / img_name
-    if not path.exists():
-        return JSONResponse({"error": "Not found"}, status_code=404)
-    with open(path, "rb") as f:
-        img_bytes = f.read()
-        encoded = base64.b64encode(img_bytes).decode("utf-8")
-        mime = "image/jpeg"
-        return {"base64": f"data:{mime};base64,{encoded}"}
-
 
 @app.post("/upload-passport-images")
 async def upload_passport_images(
     customer_code: str = Form(...),
-    image_photo: UploadFile = None,
-    image_vis: UploadFile = None,
+    image_photo: str = Form(...),
+    image_vis: str = Form(...),
 ):
     async with SessionLocal() as session:
         result = await session.execute(
@@ -142,19 +130,14 @@ async def upload_passport_images(
             return JSONResponse({"error": "not found"}, status_code=404)
         customer_id = customer.id
 
-        for f, img_type in [(image_photo, "photo"), (image_vis, "vis")]:
-            if f:
-                save_name = f"{customer_code}_{img_type}.jpg"
-                save_path = pathlib.Path(SCAN_DIR) / save_name
-                with open(save_path, "wb") as fout:
-                    fout.write(await f.read())
-                img = PassportImage(
-                    customer_id=customer_id,
-                    image_type=img_type,
-                    file_name=save_name,
-                    created_at=datetime.datetime.now(),
-                )
-                session.add(img)
+        for file_name, img_type in [(image_photo, "photo"), (image_vis, "vis")]:
+            img = PassportImage(
+                customer_id=customer_id,
+                image_type=img_type,
+                file_name=file_name,
+                created_at=datetime.datetime.now(),
+            )
+            session.add(img)
         await session.commit()
     return JSONResponse({"result": "success", "customer_code": customer_code})
 
