@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pathlib
 import datetime
+import os
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -54,6 +55,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 SCAN_DIR = "scan_out"
+PROCESSED_DIR = os.path.join(os.path.dirname(SCAN_DIR), "processed")
+pathlib.Path(PROCESSED_DIR).mkdir(parents=True, exist_ok=True)
 
 def parse_mrz(mrz):
     lines = [l.strip() for l in mrz.strip().splitlines() if l.strip()]
@@ -82,6 +85,19 @@ def parse_mrz(mrz):
         + l2[21:27][4:6],
         "icao_mrz": mrz,
     }
+def move_files(prefix):
+    files = [
+        f"{prefix}-INFO.txt",
+        f"{prefix}-IMAGEPHOTO.jpg",
+        f"{prefix}-IMAGEVIS.jpg"
+    ]
+    processed_dir = pathlib.Path(SCAN_DIR).parent / "processed"
+    processed_dir.mkdir(exist_ok=True)
+    for fname in files:
+        src = pathlib.Path(SCAN_DIR) / fname
+        dst = processed_dir / fname
+        if src.exists():
+            src.rename(dst)
 
 @app.post("/check-passport")
 async def check_passport(data: dict):
@@ -120,6 +136,7 @@ async def upload_passport_images(
     customer_code: str = Form(...),
     image_photo: str = Form(...),
     image_vis: str = Form(...),
+    prefix: str = Form(...),
 ):
     async with SessionLocal() as session:
         result = await session.execute(
@@ -139,6 +156,7 @@ async def upload_passport_images(
             )
             session.add(img)
         await session.commit()
+        move_files(prefix)
     return JSONResponse({"result": "success", "customer_code": customer_code})
 
 
