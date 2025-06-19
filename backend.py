@@ -184,3 +184,23 @@ def pending_passports():
 def get_passport_img(img_name: str):
     path = pathlib.Path(SCAN_DIR) / img_name
     return FileResponse(path)
+@app.get("/api/processed-passports")
+def processed_passports():
+    processed_dir = pathlib.Path(SCAN_DIR).parent / "processed"
+    files = list(processed_dir.glob("*-INFO.txt"))
+    result = []
+    for f in files:
+        prefix = f.name.split("-")[0]
+        photo = f"{prefix}-IMAGEPHOTO.jpg"
+        vis = f"{prefix}-IMAGEVIS.jpg"
+        with open(f, "r", encoding="utf-8") as finfo:
+            txt = finfo.read()
+        info = {
+            "icao_mrz": txt.strip(),
+            "info_file": f.name,
+            "image_photo": photo,
+            "image_vis": vis,
+            "prefix": prefix
+        }
+        result.append(info)
+    return result
