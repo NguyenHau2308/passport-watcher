@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler
 SCAN_DIR = "scan_out"
 PROCESSED_DIR = "processed"
 API_CHECK = "http://localhost:4000/check-passport"
+API_UPLOAD = "http://localhost:4000/upload-passport-images"
 
 def check_full_passport_files(folder):
     files = list(pathlib.Path(folder).glob("001-*"))
@@ -41,8 +42,43 @@ class ScanHandler(FileSystemEventHandler):
                 try:
                     res = requests.post(API_CHECK, json=parsed, timeout=10)
                     print("Kết quả từ server:", res.text)
+                    resp_json = res.json()
+                    customer_code = resp_json.get("customer_code")
+                    if customer_code:
+                        files = {
+                            "image_photo": open(
+                                str(pathlib.Path(SCAN_DIR) / "001-IMAGEPHOTO.jpg"), "rb"
+                            ),
+                            "image_vis": open(
+                                str(pathlib.Path(SCAN_DIR) / "001-IMAGEVIS.jpg"), "rb"
+                            ),
+                        }
+                        data = {"customer_code": customer_code}
+                        res_img = requests.post(
+                            API_UPLOAD, data=data, files=files, timeout=10
+                        )
+                        print("Kết quả upload ảnh:", res_img.text)
+                        # Đóng file sau khi upload
+                        files["image_photo"].close()
+                        files["image_vis"].close()
                 except Exception as e:
                     print("Lỗi gửi API:", e)
+
+            # Sau khi nhận response từ API_CHECK
+            resp_json = res.json()
+            customer_code = resp_json.get("customer_code")
+            if customer_code:
+                files = {
+                    "image_photo": open(
+                        str(pathlib.Path(SCAN_DIR) / "001-IMAGEPHOTO.jpg"), "rb"
+                    ),
+                    "image_vis": open(
+                        str(pathlib.Path(SCAN_DIR) / "001-IMAGEVIS.jpg"), "rb"
+                    ),
+                }
+                data = {"customer_code": customer_code}
+                res_img = requests.post(API_UPLOAD, data=data, files=files, timeout=10)
+                print("Kết quả upload ảnh:", res_img.text)
             # Move files sang processed
             for f in ["001-IMAGEPHOTO.jpg", "001-IMAGEVIS.jpg", "001-INFO.txt"]:
                 src = pathlib.Path(SCAN_DIR) / f
