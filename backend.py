@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, UploadFile, Depends, Form
+from fastapi_keycloak import FastAPIKeycloak
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pathlib
@@ -15,6 +16,7 @@ engine = create_async_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 Base = declarative_base()
 
+
 class Info(Base):
     __tablename__ = "info"
     id = Column(Integer, primary_key=True, index=True)
@@ -29,6 +31,7 @@ class Info(Base):
     date_of_expiry = Column(String(12))
     icao_mrz = Column(Text)
 
+
 class Customer(Base):
     __tablename__ = "customers"
     id = Column(Integer, primary_key=True, index=True)
@@ -36,6 +39,7 @@ class Customer(Base):
     icao_mrz = Column(Text, nullable=False)
     customer_code = Column(String(32), nullable=False)
     created_at = Column(TIMESTAMP)
+
 
 class PassportImage(Base):
     __tablename__ = "passport_images"
@@ -45,8 +49,24 @@ class PassportImage(Base):
     file_name = Column(String(255))
     created_at = Column(TIMESTAMP)
 
+keycloak = FastAPIKeycloak(
+    server_url="http://localhost:8080/",
+    client_id="passport-app",
+    client_secret="ZYriHxr6APs77wvkwYsRZeVvyYpAi9am", 
+    admin_client_secret="eusgX9miXp4FtqdwBqeWfW4NOyp7UYpo",
+    realm="passport-realm",
+    callback_uri="http://localhost:4000/login/callback",
+)
+
 
 app = FastAPI()
+keycloak.add_swagger_config(app) 
+
+# Khai báo route bảo vệ bằng Keycloak
+@app.get("/private")
+def private_route(user=Depends(keycloak.get_current_user())):
+    return {"message": f"Hello, {user.preferred_username}"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -57,6 +77,7 @@ app.add_middleware(
 SCAN_DIR = "scan_out"
 PROCESSED_DIR = os.path.join(os.path.dirname(SCAN_DIR), "processed")
 pathlib.Path(PROCESSED_DIR).mkdir(parents=True, exist_ok=True)
+
 
 def parse_mrz(mrz):
     lines = [l.strip() for l in mrz.strip().splitlines() if l.strip()]
@@ -85,12 +106,10 @@ def parse_mrz(mrz):
         + l2[21:27][4:6],
         "icao_mrz": mrz,
     }
+
+
 def move_files(prefix):
-    files = [
-        f"{prefix}-INFO.txt",
-        f"{prefix}-IMAGEPHOTO.jpg",
-        f"{prefix}-IMAGEVIS.jpg"
-    ]
+    files = [f"{prefix}-INFO.txt", f"{prefix}-IMAGEPHOTO.jpg", f"{prefix}-IMAGEVIS.jpg"]
     processed_dir = pathlib.Path(SCAN_DIR).parent / "processed"
     processed_dir.mkdir(exist_ok=True)
     for fname in files:
@@ -98,6 +117,7 @@ def move_files(prefix):
         dst = processed_dir / fname
         if src.exists():
             src.rename(dst)
+
 
 @app.post("/check-passport")
 async def check_passport(data: dict):
@@ -184,6 +204,8 @@ def pending_passports():
 def get_passport_img(img_name: str):
     path = pathlib.Path(SCAN_DIR) / img_name
     return FileResponse(path)
+
+
 @app.get("/api/processed-passports")
 def processed_passports():
     processed_dir = pathlib.Path(SCAN_DIR).parent / "processed"
@@ -200,7 +222,7 @@ def processed_passports():
             "info_file": f.name,
             "image_photo": photo,
             "image_vis": vis,
-            "prefix": prefix
+            "prefix": prefix,
         }
         result.append(info)
     return result

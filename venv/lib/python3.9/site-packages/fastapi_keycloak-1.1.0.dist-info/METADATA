@@ -1,0 +1,100 @@
+Metadata-Version: 2.4
+Name: fastapi_keycloak
+Version: 1.1.0
+Summary: Keycloak API Client for integrating authentication and authorization with FastAPI
+Author-email: Jonas Scholl <jonas@code-specialist.com>, Yannic Schröer <yannic@code-specialist.com>, Alex Barceló <alex@betarho.net>
+Maintainer-email: Alex Barceló <alex@betarho.net>
+Project-URL: documentation, https://fastapi-keycloak.code-specialist.com/
+Project-URL: repository, https://github.com/fastapi-keycloak/fastapi-keycloak
+Project-URL: issues, https://github.com/fastapi-keycloak/fastapi-keycloak/issues
+Keywords: Keycloak,FastAPI,Authentication,Authorization
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Internet :: WWW/HTTP :: Session
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Framework :: FastAPI
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: anyio>=3.4.0
+Requires-Dist: asgiref>=3.4.1
+Requires-Dist: certifi>=2023.7.22
+Requires-Dist: charset-normalizer>=2.0.9
+Requires-Dist: click>=8.0.3
+Requires-Dist: ecdsa>=0.17.0
+Requires-Dist: fastapi>=0.70.1
+Requires-Dist: h11>=0.12.0
+Requires-Dist: idna>=3.3
+Requires-Dist: pyasn1>=0.4.8
+Requires-Dist: pydantic>=1.5a1
+Requires-Dist: python-jose>=3.3.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: rsa>=4.8
+Requires-Dist: six>=1.16.0
+Requires-Dist: sniffio>=1.2.0
+Requires-Dist: starlette>=0.36.2
+Requires-Dist: typing_extensions>=4.0.1
+Requires-Dist: urllib3>=1.26.17
+Requires-Dist: uvicorn>=0.16.0
+Requires-Dist: itsdangerous>=2.0.1
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3.4; extra == "dev"
+Requires-Dist: pytest-cov>=6.0.0; extra == "dev"
+Dynamic: license-file
+
+# FastAPI Keycloak Integration
+
+![Py3.9](https://img.shields.io/badge/-Python%203.9-brightgreen)
+![Py3.10](https://img.shields.io/badge/-Python%203.10-brightgreen)
+![Py3.11](https://img.shields.io/badge/-Python%203.11-brightgreen)
+![Py3.12](https://img.shields.io/badge/-Python%203.12-brightgreen)
+
+## Introduction
+
+Welcome to `fastapi-keycloak`. This projects goal is to ease the integration of Keycloak (OpenID Connect) with Python, especially FastAPI. FastAPI is not necessary but is
+encouraged due to specific features. Currently, this package supports only the `password` and the `authorization_code`. However, the `get_current_user()` method accepts any JWT
+that was signed using Keycloak´s private key.
+
+## Docs
+
+Docs are available at [https://fastapi-keycloak.code-specialist.com/](https://fastapi-keycloak.code-specialist.com/).
+
+## TLDR
+
+FastAPI Keycloak enables you to do the following things without writing a single line of additional code:
+
+- Verify identities and roles of users with Keycloak
+- Get a list of available identity providers
+- Create/read/delete users
+- Create/read/delete roles
+- Create/read/delete/assign groups (recursive). Thanks to @fabiothz
+- Assign/remove roles from users
+- Implement the `password` or the `authorization_code` flow (login/callback/logout)
+
+## Contributions
+
+We would like encourage anyone using this package to contribute to its improvement, if anything isn't working as expected or isn't well enough documented, please open an issue or a
+pull request. Please note that for any code contribution tests are required.
+
+### Testing
+
+Tests are stored and executed in `./tests`. To test the package, it is necessary to use the `start_infra.sh` script upfront, to set up Keycloak and Postgres. We do this to avoid
+artificial testing conditions that occur by mocking all the keycloak requests. The issue here is that we currently see no way to offer public testing opportunities without
+significant security issues, which is why you have to run these tests locally and provide a `test_coverage.xml` file. The test coverage is configured in the `pytest.ini` and will
+be created once the tests finished running (locally).
+
+## Original authors
+
+Shoutout to the original authors of this project:
+
+- Yannic Schröer @yannicschroeer
+- Jonas Scholl @JonasScholl
+
+This project was in the [Code Specialist organization](https://github.com/code-specialist/) before being moved here.
