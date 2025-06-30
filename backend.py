@@ -237,11 +237,13 @@ def pending_passports():
         vis = f"{prefix}-IMAGEVIS.jpg"
         with open(f, "r", encoding="utf-8") as finfo:
             txt = finfo.read()
+        mrz_fields = parse_mrz(txt.strip())
         info = {
             "icao_mrz": txt.strip(),
             "info_file": f.name,
             "image_photo": photo,
             "image_vis": vis,
+            "mrz_fields": mrz_fields,
         }
         result.append(info)
     return result
@@ -264,12 +266,14 @@ def processed_passports():
         vis = f"{prefix}-IMAGEVIS.jpg"
         with open(f, "r", encoding="utf-8") as finfo:
             txt = finfo.read()
+        mrz_fields = parse_mrz(txt.strip())
         info = {
             "icao_mrz": txt.strip(),
             "info_file": f.name,
             "image_photo": photo,
             "image_vis": vis,
             "prefix": prefix,
+            "mrz_fields": mrz_fields,
         }
         result.append(info)
     return result
