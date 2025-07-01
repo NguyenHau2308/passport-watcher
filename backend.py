@@ -79,12 +79,12 @@ class Log(Base):
 # )
 
 keycloak = FastAPIKeycloak(
-    server_url=os.getenv("KEYCLOAK_SERVER_URL"),
-    client_id=os.getenv("CLIENT_ID"),
-    client_secret=os.getenv("CLIENT_SECRET"),
-    admin_client_secret=os.getenv("ADMIN_CLIENT_SECRET"),
-    realm=os.getenv("REALM"),
-    callback_uri=os.getenv("CALLBACK_URI"),
+    server_url=os.environ["KEYCLOAK_SERVER_URL"],
+    client_id=os.environ["CLIENT_ID"],
+    client_secret=os.environ["CLIENT_SECRET"],
+    admin_client_secret=os.environ["ADMIN_CLIENT_SECRET"],
+    realm=os.environ["REALM"],
+    callback_uri=os.environ["CALLBACK_URI"],
 )
 
 
