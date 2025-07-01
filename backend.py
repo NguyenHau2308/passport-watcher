@@ -14,7 +14,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey, select
 
-DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost:5432/passportdb"
+# DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost:5432/passportdb"
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -67,13 +69,22 @@ class Log(Base):
     created_at = Column(TIMESTAMP)
 
 
+# keycloak = FastAPIKeycloak(
+#     server_url="http://localhost:8080/",
+#     client_id="passport-app",
+#     client_secret="NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
+#     admin_client_secret="rXuLeOS5ZD8jD9Q1inm9Piq89EGJvZgk",
+#     realm="passport-realm",
+#     callback_uri="http://localhost:4000/login/callback",
+# )
+
 keycloak = FastAPIKeycloak(
-    server_url="http://localhost:8080/",
-    client_id="passport-app",
-    client_secret="NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
-    admin_client_secret="rXuLeOS5ZD8jD9Q1inm9Piq89EGJvZgk",
-    realm="passport-realm",
-    callback_uri="http://localhost:4000/login/callback",
+    server_url=os.getenv("KEYCLOAK_SERVER_URL"),
+    client_id=os.getenv("CLIENT_ID"),
+    client_secret=os.getenv("CLIENT_SECRET"),
+    admin_client_secret=os.getenv("ADMIN_CLIENT_SECRET"),
+    realm=os.getenv("REALM"),
+    callback_uri=os.getenv("CALLBACK_URI"),
 )
 
 
@@ -83,7 +94,11 @@ keycloak.add_swagger_config(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://passport-fe-amber.vercel.app"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://passport-fe-amber.vercel.app",
+        "https://passport-watcher.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
