@@ -2,10 +2,13 @@ from fastapi import FastAPI, UploadFile, HTTPException, Depends, Form
 from fastapi_keycloak import FastAPIKeycloak
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from sqlalchemy import JSON
+from pydantic import BaseModel
 import pathlib
 import datetime
 import os
+import requests
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -16,6 +19,10 @@ DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost:5432/passportdb"
 engine = create_async_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 Base = declarative_base()
+
+
+class LogoutBody(BaseModel):
+    refresh_token: str
 
 
 class Info(Base):
@@ -76,7 +83,7 @@ keycloak.add_swagger_config(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,6 +154,50 @@ def move_files(prefix):
         dst = processed_dir / fname
         if src.exists():
             src.rename(dst)
+
+
+@app.get("/auth/login")
+def login(redirect_uri: str):
+    kc_auth_url = (
+        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/auth"
+        f"?client_id=passport-app"
+        f"&redirect_uri={redirect_uri}"
+        "&response_type=code"
+    )
+    return RedirectResponse(url=kc_auth_url)
+
+
+@app.post("/auth/token")
+def token_exchange(code: str = Form(...), redirect_uri: str = Form(...)):
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": "passport-app",
+        "client_secret": "NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
+        "redirect_uri": redirect_uri,
+    }
+    r = requests.post(
+        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/token",
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    return r.json()
+
+
+@app.post("/auth/logout")
+def logout(body: LogoutBody):
+    refresh_token = body.refresh_token
+    data = {
+        "client_id": "passport-app",
+        "client_secret": "NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
+        "refresh_token": refresh_token,
+    }
+    r = requests.post(
+        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/logout",
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    return {"status": "ok"}
 
 
 @app.get("/private")
