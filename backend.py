@@ -63,8 +63,8 @@ class Log(Base):
 keycloak = FastAPIKeycloak(
     server_url="http://localhost:8080/",
     client_id="passport-app",
-    client_secret="ZYriHxr6APs77wvkwYsRZeVvyYpAi9am",
-    admin_client_secret="eusgX9miXp4FtqdwBqeWfW4NOyp7UYpo",
+    client_secret="NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
+    admin_client_secret="rXuLeOS5ZD8jD9Q1inm9Piq89EGJvZgk",
     realm="passport-realm",
     callback_uri="http://localhost:4000/login/callback",
 )
@@ -164,7 +164,7 @@ async def get_logs(user=Depends(require_role("admin"))):
 
 
 @app.post("/check-passport")
-async def check_passport(data: dict, user=Depends(keycloak.get_current_user())):
+async def check_passport(data: dict, user=Depends(require_role("scanner"))):
     icao_mrz = data.get("icao_mrz")
     if not icao_mrz:
         return JSONResponse({"error": "Thiếu mã ICAO"}, status_code=400)
