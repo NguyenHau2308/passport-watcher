@@ -182,6 +182,11 @@ def move_files(prefix):
 #     )
 #     return RedirectResponse(url=kc_auth_url)
 
+@app.get("/", include_in_schema=False)
+def root():
+    """Route mà Render gọi HEAD/GET để health-check."""
+    return JSONResponse({"status": "ok"})
+
 
 @app.get("/auth/login")
 def login(redirect_uri: str):
