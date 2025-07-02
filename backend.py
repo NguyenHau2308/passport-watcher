@@ -85,7 +85,7 @@ keycloak = FastAPIKeycloak(
     admin_client_secret=os.environ["ADMIN_CLIENT_SECRET"],
     realm=os.environ["REALM"],
     callback_uri=os.environ["CALLBACK_URI"],
-    initialise_admin=False,
+    # initialise_admin=False,
 )
 
 
