@@ -171,33 +171,32 @@ def move_files(prefix):
         if src.exists():
             src.rename(dst)
 
-
-# @app.get("/auth/login")
-# def login(redirect_uri: str):
-#     kc_auth_url = (
-#         "http://localhost:8080/realms/passport-realm/protocol/openid-connect/auth"
-#         f"?client_id=passport-app"
-#         f"&redirect_uri={redirect_uri}"
-#         "&response_type=code"
-#     )
-#     return RedirectResponse(url=kc_auth_url)
-
-@app.get("/", include_in_schema=False)
-def root():
-    """Route mà Render gọi HEAD/GET để health-check."""
-    return JSONResponse({"status": "ok"})
-
-
 @app.get("/auth/login")
 def login(redirect_uri: str):
     kc_auth_url = (
-        f"{os.environ['KEYCLOAK_SERVER_URL']}/realms/passport-realm/"
-        "protocol/openid-connect/auth"
+        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/auth"
         f"?client_id=passport-app"
         f"&redirect_uri={redirect_uri}"
         "&response_type=code"
     )
     return RedirectResponse(url=kc_auth_url)
+
+# @app.get("/", include_in_schema=False)
+# def root():
+#     """Route mà Render gọi HEAD/GET để health-check."""
+#     return JSONResponse({"status": "ok"})
+
+
+# @app.get("/auth/login")
+# def login(redirect_uri: str):
+#     kc_auth_url = (
+#         f"{os.environ['KEYCLOAK_SERVER_URL']}/realms/passport-realm/"
+#         "protocol/openid-connect/auth"
+#         f"?client_id=passport-app"
+#         f"&redirect_uri={redirect_uri}"
+#         "&response_type=code"
+#     )
+#     return RedirectResponse(url=kc_auth_url)
 
 
 @app.post("/auth/token")
