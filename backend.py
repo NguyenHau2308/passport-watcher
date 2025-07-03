@@ -189,6 +189,10 @@ def login(redirect_uri: str):
 #     """Route mà Render gọi HEAD/GET để health-check."""
 #     return JSONResponse({"status": "ok"})
 
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"status": "ok"}
+
 
 # @app.get("/auth/login")
 # def login(redirect_uri: str):
