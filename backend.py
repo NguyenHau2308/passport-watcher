@@ -171,15 +171,18 @@ def move_files(prefix):
         if src.exists():
             src.rename(dst)
 
+
 @app.get("/auth/login")
 def login(redirect_uri: str):
     kc_auth_url = (
-        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/auth"
-        f"?client_id=passport-app"
+        f"{keycloak.server_url.rstrip('/')}/realms/{keycloak.realm}"
+        "/protocol/openid-connect/auth"
+        f"?client_id={keycloak.client_id}"
         f"&redirect_uri={redirect_uri}"
         "&response_type=code"
     )
-    return RedirectResponse(url=kc_auth_url)
+    return RedirectResponse(kc_auth_url)
+
 
 # @app.get("/", include_in_schema=False)
 # def root():
@@ -204,12 +207,12 @@ def token_exchange(code: str = Form(...), redirect_uri: str = Form(...)):
     data = {
         "grant_type": "authorization_code",
         "code": code,
-        "client_id": "passport-app",
-        "client_secret": "NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
+        "client_id": keycloak.client_id,
+        "client_secret": keycloak.client_secret,
         "redirect_uri": redirect_uri,
     }
     r = requests.post(
-        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/token",
+        f"{keycloak.server_url.rstrip('/')}/realms/{keycloak.realm}/protocol/openid-connect/token",
         data=data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
@@ -218,14 +221,13 @@ def token_exchange(code: str = Form(...), redirect_uri: str = Form(...)):
 
 @app.post("/auth/logout")
 def logout(body: LogoutBody):
-    refresh_token = body.refresh_token
     data = {
-        "client_id": "passport-app",
-        "client_secret": "NgrqjI3dqFUn2lztBRJNi0i7MJaPxCT7",
-        "refresh_token": refresh_token,
+        "client_id": keycloak.client_id,
+        "client_secret": keycloak.client_secret,
+        "refresh_token": body.refresh_token,
     }
-    r = requests.post(
-        "http://localhost:8080/realms/passport-realm/protocol/openid-connect/logout",
+    requests.post(
+        f"{keycloak.server_url.rstrip('/')}/realms/{keycloak.realm}/protocol/openid-connect/logout",
         data=data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
